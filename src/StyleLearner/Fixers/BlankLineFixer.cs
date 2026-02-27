@@ -5,11 +5,11 @@ namespace StyleLearner.Fixers;
 
 public class BlankLineFixer : ILayoutFixer
 {
-    private readonly BlankLineRule _rule;
+    private readonly BlankLineRule? _rule;
 
     public string Name => "Blank Lines";
 
-    public BlankLineFixer(BlankLineRule rule)
+    public BlankLineFixer(BlankLineRule? rule = null)
     {
         _rule = rule;
     }
@@ -20,20 +20,17 @@ public class BlankLineFixer : ILayoutFixer
         var lines = new List<string>(source.Split('\n'));
         int changes = 0;
 
-        // Pass 1: Collapse consecutive blank lines
+        // Always: collapse consecutive blank lines (2+ → 1)
         changes += CollapseConsecutiveBlanks(lines);
 
-        // Pass 2: Fix blank after opening brace
-        changes += FixBlankAfterOpenBrace(lines);
-
-        // Pass 3: Fix blank before closing brace
-        changes += FixBlankBeforeCloseBrace(lines);
-
-        // Pass 4: Fix blank after #region
-        changes += FixBlankAfterRegion(lines);
-
-        // Pass 5: Fix blank before #endregion
-        changes += FixBlankBeforeEndRegion(lines);
+        // Style-dependent rules (only when detection confidence is high enough)
+        if (_rule != null)
+        {
+            changes += FixBlankAfterOpenBrace(lines);
+            changes += FixBlankBeforeCloseBrace(lines);
+            changes += FixBlankAfterRegion(lines);
+            changes += FixBlankBeforeEndRegion(lines);
+        }
 
         if (changes == 0)
             return new FixerResult { Tree = tree, ChangesApplied = 0 };
@@ -52,13 +49,14 @@ public class BlankLineFixer : ILayoutFixer
     {
         int changes = 0;
         int consecutiveBlanks = 0;
+        int max = _rule?.MaxConsecutiveBlankLines ?? 1;
 
         for (int i = 0; i < lines.Count; i++)
         {
             if (IsBlank(lines[i]))
             {
                 consecutiveBlanks++;
-                if (consecutiveBlanks > _rule.MaxConsecutiveBlankLines)
+                if (consecutiveBlanks > max)
                 {
                     lines.RemoveAt(i);
                     i--;
@@ -87,13 +85,13 @@ public class BlankLineFixer : ILayoutFixer
 
             bool hasBlank = i + 1 < lines.Count && IsBlank(lines[i + 1]);
 
-            if (_rule.BlankLineAfterOpenBrace && !hasBlank)
+            if (_rule!.BlankLineAfterOpenBrace && !hasBlank)
             {
                 // Add blank line after {
                 lines.Insert(i + 1, "");
                 changes++;
             }
-            else if (!_rule.BlankLineAfterOpenBrace && hasBlank)
+            else if (!_rule!.BlankLineAfterOpenBrace && hasBlank)
             {
                 // Remove blank line(s) after {
                 while (i + 1 < lines.Count && IsBlank(lines[i + 1]))
@@ -120,14 +118,14 @@ public class BlankLineFixer : ILayoutFixer
 
             bool hasBlank = i - 1 >= 0 && IsBlank(lines[i - 1]);
 
-            if (_rule.BlankLineBeforeCloseBrace && !hasBlank)
+            if (_rule!.BlankLineBeforeCloseBrace && !hasBlank)
             {
                 // Add blank line before }
                 lines.Insert(i, "");
                 i++; // skip past inserted line
                 changes++;
             }
-            else if (!_rule.BlankLineBeforeCloseBrace && hasBlank)
+            else if (!_rule!.BlankLineBeforeCloseBrace && hasBlank)
             {
                 // Remove blank line(s) before }
                 while (i - 1 >= 0 && IsBlank(lines[i - 1]))
@@ -152,12 +150,12 @@ public class BlankLineFixer : ILayoutFixer
 
             bool hasBlank = i + 1 < lines.Count && IsBlank(lines[i + 1]);
 
-            if (_rule.BlankLineAfterRegion && !hasBlank)
+            if (_rule!.BlankLineAfterRegion && !hasBlank)
             {
                 lines.Insert(i + 1, "");
                 changes++;
             }
-            else if (!_rule.BlankLineAfterRegion && hasBlank)
+            else if (!_rule!.BlankLineAfterRegion && hasBlank)
             {
                 while (i + 1 < lines.Count && IsBlank(lines[i + 1]))
                 {
@@ -180,13 +178,13 @@ public class BlankLineFixer : ILayoutFixer
 
             bool hasBlank = i - 1 >= 0 && IsBlank(lines[i - 1]);
 
-            if (_rule.BlankLineBeforeEndRegion && !hasBlank)
+            if (_rule!.BlankLineBeforeEndRegion && !hasBlank)
             {
                 lines.Insert(i, "");
                 i++;
                 changes++;
             }
-            else if (!_rule.BlankLineBeforeEndRegion && hasBlank)
+            else if (!_rule!.BlankLineBeforeEndRegion && hasBlank)
             {
                 while (i - 1 >= 0 && IsBlank(lines[i - 1]))
                 {

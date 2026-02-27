@@ -97,8 +97,9 @@ public class LayoutFixerOrchestrator
         // Whitespace always runs (no confidence needed)
         fixers.Add(new WhitespaceFixer());
 
-        if (_config.BlankLines != null)
-            fixers.Add(new BlankLineFixer(_config.BlankLines));
+        // Blank lines always runs for consecutive collapse;
+        // brace/region rules only apply when config is detected
+        fixers.Add(new BlankLineFixer(_config.BlankLines));
 
         return fixers;
     }

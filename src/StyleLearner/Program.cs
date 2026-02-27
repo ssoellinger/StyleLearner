@@ -131,6 +131,7 @@ static void PrintActiveRules(LayoutStyleConfig config)
     Console.WriteLine("Active rules:");
 
     Console.WriteLine("  Whitespace: always (trailing whitespace + internal space collapse)");
+    Console.WriteLine("  Blank Lines: always (collapse 2+ consecutive to 1)");
 
     if (config.TrailingComma != null)
         Console.WriteLine($"  Trailing Comma: {(config.TrailingComma.HasTrailingComma ? "add" : "remove")}");
@@ -169,12 +170,12 @@ static void PrintActiveRules(LayoutStyleConfig config)
 
     if (config.BlankLines != null)
     {
-        Console.WriteLine($"  Blank Lines: max {config.BlankLines.MaxConsecutiveBlankLines} consecutive, " +
+        Console.WriteLine($"  Blank Line Style: " +
             $"after {{: {(config.BlankLines.BlankLineAfterOpenBrace ? "add" : "remove")}, " +
             $"before }}: {(config.BlankLines.BlankLineBeforeCloseBrace ? "add" : "remove")}, " +
             $"after #region: {(config.BlankLines.BlankLineAfterRegion ? "add" : "remove")}, " +
             $"before #endregion: {(config.BlankLines.BlankLineBeforeEndRegion ? "add" : "remove")}");
     }
     else
-        Console.WriteLine("  Blank Lines: skipped (low confidence)");
+        Console.WriteLine("  Blank Line Style: skipped (low confidence for brace/region rules)");
 }
