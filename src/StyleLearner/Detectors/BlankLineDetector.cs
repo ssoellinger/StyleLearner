@@ -21,6 +21,9 @@ public class BlankLineDetector : IStyleDetector
     private int _blankBeforeEndRegionCount;
     private int _noBlankBeforeEndRegionCount;
 
+    private int _blankAfterCloseBraceCount;
+    private int _noBlankAfterCloseBraceCount;
+
     private readonly ExampleCollector _examples = new();
 
     public void Analyze(SyntaxTree tree, string filePath)
@@ -93,6 +96,16 @@ public class BlankLineDetector : IStyleDetector
                 {
                     _blankBeforeEndRegionCount++;
                 }
+
+                // Blank after } (SA1513) — check line before the blank run
+                if (blankRunStart > 0)
+                {
+                    var prevLineForBrace = lines[blankRunStart - 1].ToString().Trim();
+                    if (prevLineForBrace == "}" && !IsCloseBraceExemptFollower(currentTrimmed))
+                    {
+                        _blankAfterCloseBraceCount++;
+                    }
+                }
             }
             else
             {
@@ -125,11 +138,26 @@ public class BlankLineDetector : IStyleDetector
                     {
                         _noBlankBeforeEndRegionCount++;
                     }
+
+                    // No blank after } (SA1513) — prev is }, current is not exempt
+                    if (prevLine == "}" && !IsCloseBraceExemptFollower(currentTrimmed))
+                    {
+                        _noBlankAfterCloseBraceCount++;
+                    }
                 }
             }
 
             consecutiveBlanks = 0;
         }
+    }
+
+    private static bool IsCloseBraceExemptFollower(string trimmedLine)
+    {
+        return trimmedLine == "}"
+            || trimmedLine.StartsWith("else")
+            || trimmedLine.StartsWith("catch")
+            || trimmedLine.StartsWith("finally")
+            || trimmedLine.StartsWith("#endregion");
     }
 
     public DetectorResult GetResult()
@@ -166,6 +194,13 @@ public class BlankLineDetector : IStyleDetector
             : 100;
         bool blankBeforeEndRegion = _blankBeforeEndRegionCount > _noBlankBeforeEndRegionCount;
 
+        // Blank after close brace (SA1513)
+        var totalAfterCloseBrace = _blankAfterCloseBraceCount + _noBlankAfterCloseBraceCount;
+        double afterCloseBraceConfidence = totalAfterCloseBrace > 0
+            ? (double)Math.Max(_blankAfterCloseBraceCount, _noBlankAfterCloseBraceCount) / totalAfterCloseBrace * 100
+            : 100;
+        bool blankAfterCloseBrace = _blankAfterCloseBraceCount > _noBlankAfterCloseBraceCount;
+
         // Overall confidence = minimum of all sub-rule confidences
         double confidence = new[]
         {
@@ -174,10 +209,11 @@ public class BlankLineDetector : IStyleDetector
             beforeCloseBraceConfidence,
             afterRegionConfidence,
             beforeEndRegionConfidence,
+            afterCloseBraceConfidence,
         }.Min();
 
         var sampleCount = totalBlankRuns + totalAfterBrace + totalBeforeCloseBrace
-                          + totalAfterRegion + totalBeforeEndRegion;
+                          + totalAfterRegion + totalBeforeEndRegion + totalAfterCloseBrace;
 
         var patternParts = new List<string> { $"max 1 consecutive" };
         patternParts.Add(blankAfterBrace ? "blank after {" : "no blank after {");
@@ -186,6 +222,8 @@ public class BlankLineDetector : IStyleDetector
             patternParts.Add(blankAfterRegion ? "blank after #region" : "no blank after #region");
         if (totalBeforeEndRegion > 0)
             patternParts.Add(blankBeforeEndRegion ? "blank before #endregion" : "no blank before #endregion");
+        if (totalAfterCloseBrace > 0)
+            patternParts.Add(blankAfterCloseBrace ? "blank after }" : "no blank after }");
 
         return new DetectorResult
         {
@@ -209,6 +247,10 @@ public class BlankLineDetector : IStyleDetector
                 ["NoBlankAfterRegionCount"] = _noBlankAfterRegionCount,
                 ["BlankBeforeEndRegionCount"] = _blankBeforeEndRegionCount,
                 ["NoBlankBeforeEndRegionCount"] = _noBlankBeforeEndRegionCount,
+                ["BlankAfterCloseBrace"] = blankAfterCloseBrace,
+                ["BlankAfterCloseBraceCount"] = _blankAfterCloseBraceCount,
+                ["NoBlankAfterCloseBraceCount"] = _noBlankAfterCloseBraceCount,
+                ["AfterCloseBraceConfidence"] = $"{afterCloseBraceConfidence:F1}%",
                 ["AfterBraceConfidence"] = $"{afterBraceConfidence:F1}%",
                 ["BeforeCloseBraceConfidence"] = $"{beforeCloseBraceConfidence:F1}%",
                 ["AfterRegionConfidence"] = $"{afterRegionConfidence:F1}%",

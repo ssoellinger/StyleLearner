@@ -122,7 +122,6 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                 await _googleCloudClient
                 .FileExistsAsync( ipRangeItem, cancellationToken
                 )
-
             )
             {
                 using (MemoryStream fileIpRange = new MemoryStream())
@@ -135,7 +134,6 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
 
                     ipRanges =
                         CsvImporter
-
                         .FromStream<DlsIpRange>( fileIpRange, "|"
                         );
                 }
@@ -149,7 +147,6 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                 await _googleCloudClient
                 .FileExistsAsync( ipClientItem, cancellationToken
                 )
-
             )
             {
                 using (MemoryStream fileIpClient = new MemoryStream())
@@ -157,13 +154,14 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                     await _googleCloudClient
                         .DownloadFileAsync( ipClientItem, fileIpClient, cancellationToken
                         );
+
                     fileIpClient.Position = 0;
 
                     ipClients =
                         CsvImporter
-
                         .FromStream<DlsIpClient>( fileIpClient, "|"
                         );
+
                 }
             }
             else
@@ -175,7 +173,6 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                 await _googleCloudClient
                 .FileExistsAsync( portItem, cancellationToken
                 )
-
             )
             {
                 using (MemoryStream filePort = new MemoryStream())
@@ -183,11 +180,11 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                     await _googleCloudClient
                         .DownloadFileAsync( portItem, filePort, cancellationToken
                         );
+
                     filePort.Position = 0;
 
                     ports =
                         CsvImporter
-
                         .FromStream<DlsPort>( filePort, "|"
                         );
                 }
@@ -201,7 +198,6 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                 await _googleCloudClient
                 .FileExistsAsync( mobilityItem, cancellationToken
                 )
-
             )
             {
                 using (MemoryStream fileMobility = new MemoryStream())
@@ -209,11 +205,11 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                     await _googleCloudClient
                         .DownloadFileAsync( mobilityItem, fileMobility, cancellationToken
                         );
+
                     fileMobility.Position = 0;
 
                     mobilities =
                         CsvImporter
-
                         .FromStream<DlsMobility>( fileMobility, "|"
                         );
                 }
@@ -292,7 +288,6 @@ namespace sDIR.Services.REP.Worker.Jobs.DLS
                 );
 
             _logger.LogInformation("Archived DLS Files");
-
             #endregion
         }
     }

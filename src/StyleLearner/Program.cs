@@ -130,7 +130,7 @@ static void PrintActiveRules(LayoutStyleConfig config)
     Console.WriteLine();
     Console.WriteLine("Active rules:");
 
-    Console.WriteLine("  Whitespace: always (trailing whitespace + internal space collapse)");
+    Console.WriteLine("  Whitespace: always (trailing whitespace, BOM, line endings, final newline)");
     Console.WriteLine("  Blank Lines: always (collapse 2+ consecutive to 1)");
 
     if (config.TrailingComma != null)
@@ -173,9 +173,25 @@ static void PrintActiveRules(LayoutStyleConfig config)
         Console.WriteLine($"  Blank Line Style: " +
             $"after {{: {(config.BlankLines.BlankLineAfterOpenBrace ? "add" : "remove")}, " +
             $"before }}: {(config.BlankLines.BlankLineBeforeCloseBrace ? "add" : "remove")}, " +
+            $"after }}: {(config.BlankLines.BlankLineAfterCloseBrace ? "add" : "remove")}, " +
             $"after #region: {(config.BlankLines.BlankLineAfterRegion ? "add" : "remove")}, " +
             $"before #endregion: {(config.BlankLines.BlankLineBeforeEndRegion ? "add" : "remove")}");
     }
     else
         Console.WriteLine("  Blank Line Style: skipped (low confidence for brace/region rules)");
+
+    if (config.Spacing != null)
+        Console.WriteLine($"  Spacing: cast: {(config.Spacing.SpaceAfterCast ? "space" : "no space")}, keyword: {(config.Spacing.SpaceAfterKeyword ? "space" : "no space")}");
+    else
+        Console.WriteLine("  Spacing: skipped (low confidence)");
+
+    if (config.NewLineKeywords != null)
+        Console.WriteLine($"  Newline Before Keywords: catch: {(config.NewLineKeywords.NewLineBeforeCatch ? "new line" : "same line")}, else: {(config.NewLineKeywords.NewLineBeforeElse ? "new line" : "same line")}, finally: {(config.NewLineKeywords.NewLineBeforeFinally ? "new line" : "same line")}");
+    else
+        Console.WriteLine("  Newline Before Keywords: skipped (low confidence)");
+
+    if (config.ContinuationIndent != null)
+        Console.WriteLine($"  Continuation Indent: {config.ContinuationIndent.Style}");
+    else
+        Console.WriteLine("  Continuation Indent: skipped (low confidence)");
 }

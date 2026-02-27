@@ -14,8 +14,11 @@ public class WhitespaceFixer : ILayoutFixer
         var lines = new List<string>(source.Split('\n'));
         int changes = 0;
 
+        changes += StripBom(lines);
+        changes += NormalizeLineEndings(lines);
         changes += StripTrailingWhitespace(lines);
         changes += CollapseInternalWhitespace(lines);
+        changes += EnsureFinalNewline(lines);
 
         if (changes == 0)
             return new FixerResult { Tree = tree, ChangesApplied = 0 };
@@ -28,6 +31,48 @@ public class WhitespaceFixer : ILayoutFixer
             Tree = newTree,
             ChangesApplied = changes,
         };
+    }
+
+    private static int StripBom(List<string> lines)
+    {
+        if (lines.Count == 0) return 0;
+
+        var first = lines[0];
+        if (first.Length > 0 && first[0] == '\uFEFF')
+        {
+            lines[0] = first[1..];
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private static int NormalizeLineEndings(List<string> lines)
+    {
+        // Detect dominant ending from \r presence
+        int crCount = 0;
+        int noCrCount = 0;
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (lines[i].EndsWith('\r'))
+                crCount++;
+            else
+                noCrCount++;
+        }
+
+        // Normalize to LF (strip all \r) — our pipeline uses Split('\n')
+        // so \r at the end of lines means the file had \r\n
+        int changes = 0;
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (lines[i].EndsWith('\r'))
+            {
+                lines[i] = lines[i][..^1];
+                changes++;
+            }
+        }
+
+        return changes;
     }
 
     private static int StripTrailingWhitespace(List<string> lines)
@@ -83,6 +128,25 @@ public class WhitespaceFixer : ILayoutFixer
         }
 
         return changes;
+    }
+
+    private static int EnsureFinalNewline(List<string> lines)
+    {
+        if (lines.Count == 0)
+        {
+            lines.Add("");
+            return 1;
+        }
+
+        // After Split('\n'), a file ending with \n produces an empty last element.
+        // If the last element is non-empty, file doesn't end with a newline.
+        if (lines[^1].Trim().Length != 0)
+        {
+            lines.Add("");
+            return 1;
+        }
+
+        return 0;
     }
 
     private static string CollapseSpacesOutsideStrings(string text)

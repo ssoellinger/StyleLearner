@@ -23,6 +23,9 @@ public class LayoutStyleConfigBuilder
             TrailingComma = BuildTrailingCommaRule(report),
             NamespaceStyle = BuildNamespaceStyleRule(report),
             BlankLines = BuildBlankLineRule(report),
+            Spacing = BuildSpacingRule(report),
+            NewLineKeywords = BuildNewLineKeywordRule(report),
+            ContinuationIndent = BuildContinuationIndentRule(report),
         };
     }
 
@@ -180,6 +183,7 @@ public class LayoutStyleConfigBuilder
 
         var blankAfterBrace = GetDetail<bool>(result, "BlankAfterOpenBrace");
         var blankBeforeCloseBrace = GetDetail<bool>(result, "BlankBeforeCloseBrace");
+        var blankAfterCloseBrace = GetDetail<bool>(result, "BlankAfterCloseBrace");
         var blankAfterRegion = GetDetail<bool>(result, "BlankAfterRegion");
         var blankBeforeEndRegion = GetDetail<bool>(result, "BlankBeforeEndRegion");
 
@@ -188,8 +192,55 @@ public class LayoutStyleConfigBuilder
             MaxConsecutiveBlankLines = 1,
             BlankLineAfterOpenBrace = blankAfterBrace,
             BlankLineBeforeCloseBrace = blankBeforeCloseBrace,
+            BlankLineAfterCloseBrace = blankAfterCloseBrace,
             BlankLineAfterRegion = blankAfterRegion,
             BlankLineBeforeEndRegion = blankBeforeEndRegion,
+        };
+    }
+
+    private SpacingRule? BuildSpacingRule(StyleReport report)
+    {
+        var result = FindDetector(report, "Spacing");
+        if (result == null || result.Confidence < _minConfidence) return null;
+
+        var spaceAfterCast = GetDetail<bool>(result, "SpaceAfterCast");
+        var spaceAfterKeyword = GetDetail<bool>(result, "SpaceAfterKeyword");
+
+        return new SpacingRule
+        {
+            SpaceAfterCast = spaceAfterCast,
+            SpaceAfterKeyword = spaceAfterKeyword,
+        };
+    }
+
+    private NewLineKeywordRule? BuildNewLineKeywordRule(StyleReport report)
+    {
+        var result = FindDetector(report, "Newline Before Keywords");
+        if (result == null || result.Confidence < _minConfidence) return null;
+
+        var newLineBeforeCatch = GetDetail<bool>(result, "NewLineBeforeCatch");
+        var newLineBeforeElse = GetDetail<bool>(result, "NewLineBeforeElse");
+        var newLineBeforeFinally = GetDetail<bool>(result, "NewLineBeforeFinally");
+
+        return new NewLineKeywordRule
+        {
+            NewLineBeforeCatch = newLineBeforeCatch,
+            NewLineBeforeElse = newLineBeforeElse,
+            NewLineBeforeFinally = newLineBeforeFinally,
+        };
+    }
+
+    private ContinuationIndentRule? BuildContinuationIndentRule(StyleReport report)
+    {
+        var result = FindDetector(report, "Continuation Indent");
+        if (result == null || result.Confidence < _minConfidence) return null;
+
+        var overallStyle = GetDetail<string>(result, "OverallStyle");
+        if (overallStyle == null) return null;
+
+        return new ContinuationIndentRule
+        {
+            Style = overallStyle,
         };
     }
 

@@ -1,6 +1,6 @@
-using System;   
+using System;
 using System.Collections.Generic;
-	
+
 namespace TestWrong
 {
 
@@ -9,9 +9,8 @@ namespace TestWrong
     {
 
         // 2. Blank line after opening brace (should be removed)
-        private readonly string _name;   
-        private readonly int _count;		
-
+        private readonly string _name;
+        private readonly int _count;
 
         // 3. Two consecutive blank lines (should collapse to one)
         public BlankLineViolations(string name, int count)
@@ -19,25 +18,25 @@ namespace TestWrong
 
             // 4. Blank line after opening brace (should be removed)
             _name = name;
-            _count = count;   
+            _count = count;
 
             // 5. Blank line before closing brace (should be removed)
 
         }
 
-        public string Name => _name;   
-
-
+        public string Name
+            => _name;
 
         // 6. Three consecutive blank lines (should collapse to one)
-        public int Count => _count;
+        public int Count
+            => _count;
 
         #region Public Methods
         // 7. Missing blank line after #region (should add one)
 
         public void DoWork()
         {
-            Console.WriteLine(_name);   
+            Console.WriteLine(_name);
         }
 
         public void DoMoreWork()
@@ -61,21 +60,21 @@ namespace TestWrong
         #endregion
 
         // 19. Multiple spaces in code (should collapse to single)
-        public bool Check(int  test)
+        public bool Check(int test)
         {
-            if (test   == 1)
-                return  true;
+            if (test == 1)
+                return true;
 
-            var result  =  test   >   0;
+            var result = test > 0;
             var message = $"value is   {test}   here";
             var literal = "hello   world";
-            var  ch = ' ';
-            return  result;
+            var ch = ' ';
+            return result;
         }
 
         #region Private Helpers
 
-        private string Format()   
+        private string Format()
         {
             return $"{_name}: {_count}";
         }
@@ -106,5 +105,59 @@ namespace TestWrong
         }
         // 18. Missing blank before #endregion
         #endregion
+
+        // 20. Space after cast violations
+        public void CastTest()
+        {
+            object obj = 42;
+            var x = (int)obj; // no space after cast (should have space if configured)
+            var y = (string)obj; // space after cast (should remove if configured)
+        }
+
+        // 21. Keyword spacing violations
+        public void KeywordSpacingTest()
+        {
+            if (true) { } // no space after if
+            for (int i = 0; i < 1; i++) { } // no space after for
+            while (false) { } // no space after while
+        }
+
+        // 22. Newline before catch/else/finally violations (same-line style)
+        public void TryCatchTest()
+        {
+            try
+            {
+                Console.WriteLine("try");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex.Message);
+            }
+            finally
+            {
+                Console.WriteLine("done");
+            }
+
+            if (true)
+            {
+                Console.WriteLine("if");
+            }
+            else
+            {
+                Console.WriteLine("else");
+            }
+        }
+
+        // 23. Missing blank line after } (SA1513)
+        public void MethodOne()
+        {
+            Console.WriteLine("one");
+        }
+        public void MethodTwo()
+        {
+            Console.WriteLine("two");
+        }
+        public int PropertyAfterMethod
+            => 42;
     }
 }

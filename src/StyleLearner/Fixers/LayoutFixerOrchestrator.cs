@@ -91,7 +91,17 @@ public class LayoutFixerOrchestrator
             fixers.Add(new TernaryLayoutFixer(_config.TernaryLayout));
 
         if (_config.MethodChaining != null)
-            fixers.Add(new MethodChainingFixer(_config.MethodChaining));
+            fixers.Add(new MethodChainingFixer(_config.MethodChaining, _config.ContinuationIndent));
+
+        if (_config.ContinuationIndent != null)
+            fixers.Add(new ArgumentLayoutFixer(_config.ContinuationIndent));
+
+        // Roslyn-based spacing/keyword fixers (before text-based)
+        if (_config.Spacing != null)
+            fixers.Add(new SpacingFixer(_config.Spacing));
+
+        if (_config.NewLineKeywords != null)
+            fixers.Add(new NewLineKeywordFixer(_config.NewLineKeywords));
 
         // Text-based fixers last — they re-parse the tree
         // Whitespace always runs (no confidence needed)

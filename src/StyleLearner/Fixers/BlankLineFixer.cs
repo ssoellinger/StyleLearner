@@ -28,6 +28,7 @@ public class BlankLineFixer : ILayoutFixer
         {
             changes += FixBlankAfterOpenBrace(lines);
             changes += FixBlankBeforeCloseBrace(lines);
+            changes += FixBlankAfterCloseBrace(lines);
             changes += FixBlankAfterRegion(lines);
             changes += FixBlankBeforeEndRegion(lines);
         }
@@ -196,6 +197,63 @@ public class BlankLineFixer : ILayoutFixer
         }
 
         return changes;
+    }
+
+    private int FixBlankAfterCloseBrace(List<string> lines)
+    {
+        int changes = 0;
+
+        for (int i = 0; i < lines.Count - 1; i++)
+        {
+            if (lines[i].Trim() != "}") continue;
+
+            // Check what follows the }
+            int next = i + 1;
+            bool hasBlank = next < lines.Count && IsBlank(lines[next]);
+
+            // Skip exempt followers: }, else, catch, finally, #endregion
+            string nextContent;
+            if (hasBlank)
+            {
+                // Find first non-blank after the blank run
+                int afterBlank = next;
+                while (afterBlank < lines.Count && IsBlank(lines[afterBlank]))
+                    afterBlank++;
+                if (afterBlank >= lines.Count) continue;
+                nextContent = lines[afterBlank].Trim();
+            }
+            else
+            {
+                nextContent = lines[next].Trim();
+            }
+
+            if (IsCloseBraceExemptFollower(nextContent)) continue;
+
+            if (_rule!.BlankLineAfterCloseBrace && !hasBlank)
+            {
+                lines.Insert(i + 1, "");
+                changes++;
+            }
+            else if (!_rule!.BlankLineAfterCloseBrace && hasBlank)
+            {
+                while (i + 1 < lines.Count && IsBlank(lines[i + 1]))
+                {
+                    lines.RemoveAt(i + 1);
+                    changes++;
+                }
+            }
+        }
+
+        return changes;
+    }
+
+    private static bool IsCloseBraceExemptFollower(string trimmedLine)
+    {
+        return trimmedLine == "}"
+            || trimmedLine.StartsWith("else")
+            || trimmedLine.StartsWith("catch")
+            || trimmedLine.StartsWith("finally")
+            || trimmedLine.StartsWith("#endregion");
     }
 
     private static bool IsBlank(string line)

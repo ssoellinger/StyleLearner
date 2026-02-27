@@ -25,6 +25,9 @@ public class StyleAnalyzer
             new LineLengthDetector(),
             new UsingLayoutDetector(),
             new BlankLineDetector(),
+            new SpacingDetector(),
+            new NewLineKeywordDetector(),
+            new ContinuationIndentDetector(),
         };
     }
 

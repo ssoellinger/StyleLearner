@@ -16,6 +16,12 @@ public class EditorConfigGenerator
             "root = true",
             "",
             "[*.cs]",
+            "",
+            "# Universal whitespace rules (always applied)",
+            "insert_final_newline = true",
+            "end_of_line = lf",
+            "trim_trailing_whitespace = true",
+            "charset = utf-8",
         };
 
         foreach (var result in report.Results)
@@ -52,6 +58,15 @@ public class EditorConfigGenerator
                 break;
             case "Object Initializer":
                 GenerateObjectInitializerRules(result, rules);
+                break;
+            case "Spacing":
+                GenerateSpacingRules(result, rules);
+                break;
+            case "Newline Before Keywords":
+                GenerateNewLineKeywordRules(result, rules);
+                break;
+            case "Continuation Indent":
+                GenerateContinuationIndentRules(result, rules);
                 break;
         }
 
@@ -148,5 +163,32 @@ public class EditorConfigGenerator
     {
         var trailingComma = Convert.ToBoolean(result.Details.GetValueOrDefault("TrailingComma", false));
         rules.Add($"# Trailing comma in initializers: {(trailingComma ? "yes" : "no")}");
+    }
+
+    private static void GenerateSpacingRules(DetectorResult result, List<string> rules)
+    {
+        var spaceAfterCast = Convert.ToBoolean(result.Details.GetValueOrDefault("SpaceAfterCast", false));
+        var spaceAfterKeyword = Convert.ToBoolean(result.Details.GetValueOrDefault("SpaceAfterKeyword", true));
+
+        rules.Add($"csharp_space_after_cast = {spaceAfterCast.ToString().ToLower()}");
+        rules.Add($"csharp_space_after_keywords_in_control_flow_statements = {spaceAfterKeyword.ToString().ToLower()}");
+    }
+
+    private static void GenerateContinuationIndentRules(DetectorResult result, List<string> rules)
+    {
+        var style = result.Details.GetValueOrDefault("OverallStyle", "relative").ToString();
+        rules.Add($"# Continuation indent style: {style} (no standard .editorconfig key)");
+        rules.Add($"# Chain dots and call arguments use {(style == "relative" ? "4-space relative" : "column-aligned")} indentation");
+    }
+
+    private static void GenerateNewLineKeywordRules(DetectorResult result, List<string> rules)
+    {
+        var newLineBeforeCatch = Convert.ToBoolean(result.Details.GetValueOrDefault("NewLineBeforeCatch", true));
+        var newLineBeforeElse = Convert.ToBoolean(result.Details.GetValueOrDefault("NewLineBeforeElse", true));
+        var newLineBeforeFinally = Convert.ToBoolean(result.Details.GetValueOrDefault("NewLineBeforeFinally", true));
+
+        rules.Add($"csharp_new_line_before_catch = {newLineBeforeCatch.ToString().ToLower()}");
+        rules.Add($"csharp_new_line_before_else = {newLineBeforeElse.ToString().ToLower()}");
+        rules.Add($"csharp_new_line_before_finally = {newLineBeforeFinally.ToString().ToLower()}");
     }
 }

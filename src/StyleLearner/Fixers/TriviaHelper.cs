@@ -124,4 +124,21 @@ public static class TriviaHelper
     {
         return !IsMultiLine(node);
     }
+
+    /// <summary>
+    /// Returns true if the line immediately above the given token in the source text is blank.
+    /// This reliably detects blank lines even when they span across trailing/leading trivia.
+    /// </summary>
+    public static bool HasBlankLineBefore(SyntaxToken token)
+    {
+        var tree = token.SyntaxTree;
+        if (tree == null) return false;
+
+        var text = tree.GetText();
+        var lineNum = text.Lines.GetLineFromPosition(token.SpanStart).LineNumber;
+        if (lineNum <= 0) return false;
+
+        var prevLine = text.Lines[lineNum - 1].ToString();
+        return string.IsNullOrWhiteSpace(prevLine);
+    }
 }

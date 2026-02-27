@@ -10,6 +10,9 @@ public class LayoutStyleConfig
     public TrailingCommaRule? TrailingComma { get; init; }
     public NamespaceStyleRule? NamespaceStyle { get; init; }
     public BlankLineRule? BlankLines { get; init; }
+    public SpacingRule? Spacing { get; init; }
+    public NewLineKeywordRule? NewLineKeywords { get; init; }
+    public ContinuationIndentRule? ContinuationIndent { get; init; }
 }
 
 public class ParameterLayoutRule
@@ -58,6 +61,26 @@ public class BlankLineRule
     public int MaxConsecutiveBlankLines { get; init; } = 1;
     public bool BlankLineAfterOpenBrace { get; init; }
     public bool BlankLineBeforeCloseBrace { get; init; }
+    public bool BlankLineAfterCloseBrace { get; init; }
     public bool BlankLineAfterRegion { get; init; } = true;
     public bool BlankLineBeforeEndRegion { get; init; } = true;
+}
+
+public class SpacingRule
+{
+    public bool SpaceAfterCast { get; init; }
+    public bool SpaceAfterKeyword { get; init; } = true;
+}
+
+public class NewLineKeywordRule
+{
+    public bool NewLineBeforeCatch { get; init; } = true;
+    public bool NewLineBeforeElse { get; init; } = true;
+    public bool NewLineBeforeFinally { get; init; } = true;
+}
+
+public class ContinuationIndentRule
+{
+    /// <summary>"relative" or "column"</summary>
+    public string Style { get; init; } = "relative";
 }

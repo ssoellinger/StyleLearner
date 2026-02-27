@@ -5,7 +5,7 @@ using System.Linq;
 namespace TestWrong
 {
     // 1. Inheritance: colon on SAME line (should be new line)
-    public class MyService 
+    public class MyService
         : IDisposable, ICloneable
     {
         private readonly string _name;
@@ -25,18 +25,18 @@ namespace TestWrong
         }
 
         // 3. Arrow on same line (should be new line)
-        public string Name 
+        public string Name
             => _name;
 
-        public int Timeout 
+        public int Timeout
             => _timeout;
 
         // 4. Arrow on same line for method
-        public string GetDisplayName() 
+        public string GetDisplayName()
             => $"{_name} (timeout={_timeout})";
 
         // 5. Ternary: single-line but long (should be multi-line with aligned ? :)
-        public string GetStatus() 
+        public string GetStatus()
             => _enabled
                 ? $"Service '{_name}' is active with timeout {_timeout}ms"
                 : $"Service '{_name}' is disabled";
@@ -74,13 +74,13 @@ namespace TestWrong
         }
 
         // 9. Inheritance on same line for nested class
-        public class Builder 
+        public class Builder
             : IDisposable
         {
             private string _name = "";
             private int _timeout = 30;
 
-            public Builder WithName(string name) 
+            public Builder WithName(string name)
                 => throw new NotImplementedException();
 
             // 10. Another long ternary
@@ -96,19 +96,19 @@ namespace TestWrong
         }
 
         // 11. Struct with same-line inheritance
-        public struct Options 
+        public struct Options
             : IEquatable<Options>
         {
             public string Name { get; init; }
             public int Timeout { get; init; }
 
-            public bool Equals(Options other) 
+            public bool Equals(Options other)
                 => Name == other.Name && Timeout == other.Timeout;
         }
 
         public void Dispose() { }
 
-        public object Clone() 
+        public object Clone()
             => throw new NotImplementedException();
     }
 }
