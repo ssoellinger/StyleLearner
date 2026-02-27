@@ -130,6 +130,8 @@ static void PrintActiveRules(LayoutStyleConfig config)
     Console.WriteLine();
     Console.WriteLine("Active rules:");
 
+    Console.WriteLine("  Whitespace: always (trailing whitespace + internal space collapse)");
+
     if (config.TrailingComma != null)
         Console.WriteLine($"  Trailing Comma: {(config.TrailingComma.HasTrailingComma ? "add" : "remove")}");
     else

@@ -93,7 +93,10 @@ public class LayoutFixerOrchestrator
         if (_config.MethodChaining != null)
             fixers.Add(new MethodChainingFixer(_config.MethodChaining));
 
-        // Blank lines last — it re-parses the tree from text
+        // Text-based fixers last — they re-parse the tree
+        // Whitespace always runs (no confidence needed)
+        fixers.Add(new WhitespaceFixer());
+
         if (_config.BlankLines != null)
             fixers.Add(new BlankLineFixer(_config.BlankLines));
 
