@@ -194,4 +194,13 @@ static void PrintActiveRules(LayoutStyleConfig config)
         Console.WriteLine($"  Continuation Indent: {config.ContinuationIndent.Style}");
     else
         Console.WriteLine("  Continuation Indent: skipped (low confidence)");
+
+    if (config.UsingDirectives != null)
+        Console.WriteLine($"  Using Directives: " +
+            $"sorted: {(config.UsingDirectives.AlphabeticallySorted ? "alphabetical" : "unsorted")}, " +
+            $"system first: {config.UsingDirectives.SystemFirst.ToString().ToLower()}, " +
+            $"separate groups: {config.UsingDirectives.SeparateGroups.ToString().ToLower()}, " +
+            $"placement: {config.UsingDirectives.Placement}");
+    else
+        Console.WriteLine("  Using Directives: skipped (low confidence)");
 }

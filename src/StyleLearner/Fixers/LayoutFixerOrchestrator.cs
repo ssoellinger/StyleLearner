@@ -70,7 +70,11 @@ public class LayoutFixerOrchestrator
     {
         var fixers = new List<ILayoutFixer>();
 
-        // Namespace style first (changes indentation of entire file)
+        // Using directives first (before namespace changes could affect placement)
+        if (_config.UsingDirectives != null)
+            fixers.Add(new UsingDirectiveFixer(_config.UsingDirectives));
+
+        // Namespace style (changes indentation of entire file)
         if (_config.NamespaceStyle != null)
             fixers.Add(new NamespaceStyleFixer(_config.NamespaceStyle));
 

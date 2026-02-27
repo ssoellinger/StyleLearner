@@ -28,6 +28,7 @@ public class StyleAnalyzer
             new SpacingDetector(),
             new NewLineKeywordDetector(),
             new ContinuationIndentDetector(),
+            new UsingDirectiveDetector(),
         };
     }
 

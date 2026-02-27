@@ -13,6 +13,7 @@ public class LayoutStyleConfig
     public SpacingRule? Spacing { get; init; }
     public NewLineKeywordRule? NewLineKeywords { get; init; }
     public ContinuationIndentRule? ContinuationIndent { get; init; }
+    public UsingDirectiveRule? UsingDirectives { get; init; }
 }
 
 public class ParameterLayoutRule
@@ -83,4 +84,12 @@ public class ContinuationIndentRule
 {
     /// <summary>"relative" or "column"</summary>
     public string Style { get; init; } = "relative";
+}
+
+public class UsingDirectiveRule
+{
+    public bool AlphabeticallySorted { get; init; } = true;
+    public bool SystemFirst { get; init; } = false;
+    public bool SeparateGroups { get; init; } = false;
+    public string Placement { get; init; } = "outside_namespace";
 }

@@ -26,6 +26,7 @@ public class LayoutStyleConfigBuilder
             Spacing = BuildSpacingRule(report),
             NewLineKeywords = BuildNewLineKeywordRule(report),
             ContinuationIndent = BuildContinuationIndentRule(report),
+            UsingDirectives = BuildUsingDirectiveRule(report),
         };
     }
 
@@ -241,6 +242,25 @@ public class LayoutStyleConfigBuilder
         return new ContinuationIndentRule
         {
             Style = overallStyle,
+        };
+    }
+
+    private UsingDirectiveRule? BuildUsingDirectiveRule(StyleReport report)
+    {
+        var result = FindDetector(report, "Using Directives");
+        if (result == null || result.Confidence < _minConfidence) return null;
+
+        var alphabeticallySorted = GetDetail<bool>(result, "AlphabeticallySorted");
+        var systemFirst = GetDetail<bool>(result, "SystemFirst");
+        var separateGroups = GetDetail<bool>(result, "SeparateGroups");
+        var placement = GetDetail<string>(result, "Placement");
+
+        return new UsingDirectiveRule
+        {
+            AlphabeticallySorted = alphabeticallySorted,
+            SystemFirst = systemFirst,
+            SeparateGroups = separateGroups,
+            Placement = placement ?? "outside_namespace",
         };
     }
 

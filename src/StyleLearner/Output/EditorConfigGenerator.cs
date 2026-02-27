@@ -68,6 +68,9 @@ public class EditorConfigGenerator
             case "Continuation Indent":
                 GenerateContinuationIndentRules(result, rules);
                 break;
+            case "Using Directives":
+                GenerateUsingDirectiveRules(result, rules);
+                break;
         }
 
         if (rules.Count > 0)
@@ -117,21 +120,9 @@ public class EditorConfigGenerator
 
     private static void GenerateUsingRules(DetectorResult result, List<string> rules)
     {
-        var placement = result.Details.GetValueOrDefault("Placement", "outside").ToString();
-        var systemFirst = result.Details.GetValueOrDefault("SystemFirst", true);
-        var sorted = result.Details.GetValueOrDefault("Sorted", true);
-
-        if (placement == "outside")
-        {
-            rules.Add("csharp_using_directive_placement = outside_namespace:suggestion");
-        }
-        else
-        {
-            rules.Add("csharp_using_directive_placement = inside_namespace:suggestion");
-        }
-
-        rules.Add($"dotnet_sort_system_directives_first = {systemFirst.ToString()!.ToLower()}");
-        rules.Add($"dotnet_separate_import_directive_groups = {(Convert.ToBoolean(systemFirst) ? "true" : "false")}");
+        // Namespace style only — using directive ordering is handled by "Using Directives" detector
+        var nsStyle = result.Details.GetValueOrDefault("NamespaceStyle", "file_scoped").ToString();
+        rules.Add($"csharp_style_namespace_declarations = {nsStyle}:suggestion");
     }
 
     private static void GenerateExpressionBodyRules(DetectorResult result, List<string> rules)
@@ -179,6 +170,21 @@ public class EditorConfigGenerator
         var style = result.Details.GetValueOrDefault("OverallStyle", "relative").ToString();
         rules.Add($"# Continuation indent style: {style} (no standard .editorconfig key)");
         rules.Add($"# Chain dots and call arguments use {(style == "relative" ? "4-space relative" : "column-aligned")} indentation");
+    }
+
+    private static void GenerateUsingDirectiveRules(DetectorResult result, List<string> rules)
+    {
+        var systemFirst = Convert.ToBoolean(result.Details.GetValueOrDefault("SystemFirst", false));
+        var separateGroups = Convert.ToBoolean(result.Details.GetValueOrDefault("SeparateGroups", false));
+        var placement = result.Details.GetValueOrDefault("Placement", "outside_namespace").ToString();
+
+        var placementValue = placement == "inside_namespace"
+            ? "inside_namespace:suggestion"
+            : "outside_namespace:suggestion";
+
+        rules.Add($"dotnet_sort_system_directives_first = {systemFirst.ToString().ToLower()}");
+        rules.Add($"dotnet_separate_import_directive_groups = {separateGroups.ToString().ToLower()}");
+        rules.Add($"csharp_using_directive_placement = {placementValue}");
     }
 
     private static void GenerateNewLineKeywordRules(DetectorResult result, List<string> rules)
