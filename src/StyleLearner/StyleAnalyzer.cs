@@ -24,6 +24,7 @@ public class StyleAnalyzer
             new TernaryDetector(),
             new LineLengthDetector(),
             new UsingLayoutDetector(),
+            new BlankLineDetector(),
         };
     }
 
@@ -55,7 +56,7 @@ public class StyleAnalyzer
         };
     }
 
-    private List<string> FindCsFiles(string directoryPath)
+    public List<string> FindCsFiles(string directoryPath)
     {
         var allFiles = Directory.GetFiles(directoryPath, "*.cs", SearchOption.AllDirectories);
         return allFiles.Where(f => !IsExcluded(f, directoryPath)).ToList();

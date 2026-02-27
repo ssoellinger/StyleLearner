@@ -17,6 +17,7 @@ public class UsingLayoutDetector : CSharpSyntaxWalker, IStyleDetector
     private int _sortedCount;
     private int _unsortedCount;
     private int _fileScopedNamespaceCount;
+    private int _blockScopedNamespaceCount;
 
     public void Analyze(SyntaxTree tree, string filePath)
     {
@@ -28,6 +29,12 @@ public class UsingLayoutDetector : CSharpSyntaxWalker, IStyleDetector
         if (fileScopedNs != null)
         {
             _fileScopedNamespaceCount++;
+        }
+
+        // Check for block-scoped namespace
+        if (root.Members.OfType<NamespaceDeclarationSyntax>().Any())
+        {
+            _blockScopedNamespaceCount++;
         }
 
         // Usings at compilation unit level
@@ -160,6 +167,8 @@ public class UsingLayoutDetector : CSharpSyntaxWalker, IStyleDetector
                 ["UnsortedCount"] = _unsortedCount,
                 ["GlobalUsingCount"] = _globalUsingCount,
                 ["FileScopedNamespaceCount"] = _fileScopedNamespaceCount,
+                ["BlockScopedNamespaceCount"] = _blockScopedNamespaceCount,
+                ["NamespaceStyle"] = _fileScopedNamespaceCount > _blockScopedNamespaceCount ? "file_scoped" : "block_scoped",
             },
             Examples = _examples.Build(placement, usingLabels),
         };
