@@ -60,6 +60,19 @@ namespace TestWrong
         // 12. Missing blank line before #endregion (should add one)
         #endregion
 
+        // 19. Multiple spaces in code (should collapse to single)
+        public bool Check(int  test)
+        {
+            if (test   == 1)
+                return  true;
+
+            var result  =  test   >   0;
+            var message = $"value is   {test}   here";
+            var literal = "hello   world";
+            var  ch = ' ';
+            return  result;
+        }
+
         #region Private Helpers
 
         private string Format()   
