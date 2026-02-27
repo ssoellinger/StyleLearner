@@ -1,6 +1,6 @@
-using System;
+using System;   
 using System.Collections.Generic;
-
+	
 namespace TestWrong
 {
 
@@ -9,8 +9,8 @@ namespace TestWrong
     {
 
         // 2. Blank line after opening brace (should be removed)
-        private readonly string _name;
-        private readonly int _count;
+        private readonly string _name;   
+        private readonly int _count;		
 
 
         // 3. Two consecutive blank lines (should collapse to one)
@@ -19,13 +19,13 @@ namespace TestWrong
 
             // 4. Blank line after opening brace (should be removed)
             _name = name;
-            _count = count;
+            _count = count;   
 
             // 5. Blank line before closing brace (should be removed)
 
         }
 
-        public string Name => _name;
+        public string Name => _name;   
 
 
 
@@ -37,7 +37,7 @@ namespace TestWrong
 
         public void DoWork()
         {
-            Console.WriteLine(_name);
+            Console.WriteLine(_name);   
         }
 
         public void DoMoreWork()
@@ -62,7 +62,7 @@ namespace TestWrong
 
         #region Private Helpers
 
-        private string Format()
+        private string Format()   
         {
             return $"{_name}: {_count}";
         }

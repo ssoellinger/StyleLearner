@@ -20,6 +20,9 @@ public class BlankLineFixer : ILayoutFixer
         var lines = new List<string>(source.Split('\n'));
         int changes = 0;
 
+        // Pass 0: Strip trailing whitespace
+        changes += StripTrailingWhitespace(lines);
+
         // Pass 1: Collapse consecutive blank lines
         changes += CollapseConsecutiveBlanks(lines);
 
@@ -194,6 +197,28 @@ public class BlankLineFixer : ILayoutFixer
                     i--;
                     changes++;
                 }
+            }
+        }
+
+        return changes;
+    }
+
+    private static int StripTrailingWhitespace(List<string> lines)
+    {
+        int changes = 0;
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            // Preserve \r from Split('\n')
+            bool hasCr = line.EndsWith('\r');
+            var content = hasCr ? line[..^1] : line;
+
+            if (content.Length > 0 && content[^1] is ' ' or '\t')
+            {
+                var trimmed = content.TrimEnd(' ', '\t');
+                lines[i] = hasCr ? trimmed + "\r" : trimmed;
+                changes++;
             }
         }
 
