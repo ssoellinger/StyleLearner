@@ -100,7 +100,10 @@ public class LayoutFixerOrchestrator
         if (_config.ContinuationIndent != null)
             fixers.Add(new ArgumentLayoutFixer(_config.ContinuationIndent));
 
-        // Roslyn-based spacing/keyword fixers (before text-based)
+        // Roslyn-based spacing/keyword/brace fixers (before text-based)
+        if (_config.BraceStyle != null)
+            fixers.Add(new BraceStyleFixer(_config.BraceStyle));
+
         if (_config.Spacing != null)
             fixers.Add(new SpacingFixer(_config.Spacing));
 

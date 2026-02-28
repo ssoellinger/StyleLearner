@@ -14,6 +14,7 @@ public class LayoutStyleConfig
     public NewLineKeywordRule? NewLineKeywords { get; init; }
     public ContinuationIndentRule? ContinuationIndent { get; init; }
     public UsingDirectiveRule? UsingDirectives { get; init; }
+    public BraceStyleRule? BraceStyle { get; init; }
 }
 
 public class ParameterLayoutRule
@@ -84,6 +85,12 @@ public class ContinuationIndentRule
 {
     /// <summary>"relative" or "column"</summary>
     public string Style { get; init; } = "relative";
+}
+
+public class BraceStyleRule
+{
+    /// <summary>"allman" or "kr"</summary>
+    public string Style { get; init; } = "allman";
 }
 
 public class UsingDirectiveRule

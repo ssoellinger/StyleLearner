@@ -133,6 +133,11 @@ static void PrintActiveRules(LayoutStyleConfig config)
     Console.WriteLine("  Whitespace: always (trailing whitespace, BOM, line endings, final newline)");
     Console.WriteLine("  Blank Lines: always (collapse 2+ consecutive to 1)");
 
+    if (config.BraceStyle != null)
+        Console.WriteLine($"  Brace Style: {config.BraceStyle.Style}");
+    else
+        Console.WriteLine("  Brace Style: skipped (low confidence)");
+
     if (config.TrailingComma != null)
         Console.WriteLine($"  Trailing Comma: {(config.TrailingComma.HasTrailingComma ? "add" : "remove")}");
     else

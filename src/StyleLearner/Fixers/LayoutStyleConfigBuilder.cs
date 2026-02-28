@@ -27,6 +27,7 @@ public class LayoutStyleConfigBuilder
             NewLineKeywords = BuildNewLineKeywordRule(report),
             ContinuationIndent = BuildContinuationIndentRule(report),
             UsingDirectives = BuildUsingDirectiveRule(report),
+            BraceStyle = BuildBraceStyleRule(report),
         };
     }
 
@@ -261,6 +262,20 @@ public class LayoutStyleConfigBuilder
             SystemFirst = systemFirst,
             SeparateGroups = separateGroups,
             Placement = placement ?? "outside_namespace",
+        };
+    }
+
+    private BraceStyleRule? BuildBraceStyleRule(StyleReport report)
+    {
+        var result = FindDetector(report, "Brace Style");
+        if (result == null || result.Confidence < _minConfidence) return null;
+
+        var style = GetDetail<string>(result, "Style");
+        if (style == null) return null;
+
+        return new BraceStyleRule
+        {
+            Style = style,
         };
     }
 
