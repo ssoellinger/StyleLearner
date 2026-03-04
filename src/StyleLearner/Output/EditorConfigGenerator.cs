@@ -71,6 +71,9 @@ public class EditorConfigGenerator
             case "Using Directives":
                 GenerateUsingDirectiveRules(result, rules);
                 break;
+            case "Var Style":
+                GenerateVarStyleRules(result, rules);
+                break;
         }
 
         if (rules.Count > 0)
@@ -185,6 +188,17 @@ public class EditorConfigGenerator
         rules.Add($"dotnet_sort_system_directives_first = {systemFirst.ToString().ToLower()}");
         rules.Add($"dotnet_separate_import_directive_groups = {separateGroups.ToString().ToLower()}");
         rules.Add($"csharp_using_directive_placement = {placementValue}");
+    }
+
+    private static void GenerateVarStyleRules(DetectorResult result, List<string> rules)
+    {
+        var style = result.Details.GetValueOrDefault("Style", "explicit").ToString();
+        var useVar = style == "var";
+        var value = useVar ? "true:suggestion" : "false:suggestion";
+
+        rules.Add($"csharp_style_var_for_built_in_types = {value}");
+        rules.Add($"csharp_style_var_when_type_is_apparent = {value}");
+        rules.Add($"csharp_style_var_elsewhere = {value}");
     }
 
     private static void GenerateNewLineKeywordRules(DetectorResult result, List<string> rules)

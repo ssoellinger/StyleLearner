@@ -15,6 +15,7 @@ public class LayoutStyleConfig
     public ContinuationIndentRule? ContinuationIndent { get; init; }
     public UsingDirectiveRule? UsingDirectives { get; init; }
     public BraceStyleRule? BraceStyle { get; init; }
+    public VarStyleRule? VarStyle { get; init; }
 }
 
 public class ParameterLayoutRule
@@ -99,4 +100,10 @@ public class UsingDirectiveRule
     public bool SystemFirst { get; init; } = false;
     public bool SeparateGroups { get; init; } = false;
     public string Placement { get; init; } = "outside_namespace";
+}
+
+public class VarStyleRule
+{
+    /// <summary>"explicit" or "var"</summary>
+    public string Style { get; init; } = "explicit";
 }

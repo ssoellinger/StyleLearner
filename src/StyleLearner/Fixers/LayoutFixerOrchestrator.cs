@@ -1,3 +1,4 @@
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace StyleLearner.Fixers;
@@ -16,10 +17,37 @@ public class LayoutFixerOrchestrator
     public FixSummary FixDirectory(string directoryPath, List<string> csFiles)
     {
         var summary = new FixSummary();
+        var semanticFixers = BuildSemanticFixerPipeline();
 
+        // Phase 1: If semantic fixers exist, build a compilation for type resolution
+        Dictionary<string, (SyntaxTree Tree, SemanticModel Model)>? semanticContext = null;
+        if (semanticFixers.Count > 0)
+        {
+            var trees = new List<SyntaxTree>();
+            var pathToTree = new Dictionary<string, SyntaxTree>();
+
+            foreach (var filePath in csFiles)
+            {
+                var sourceText = File.ReadAllText(filePath);
+                var tree = CSharpSyntaxTree.ParseText(sourceText, path: filePath);
+                trees.Add(tree);
+                pathToTree[filePath] = tree;
+            }
+
+            var compilation = CompilationFactory.Create(trees, directoryPath);
+            semanticContext = new Dictionary<string, (SyntaxTree, SemanticModel)>();
+
+            foreach (var kvp in pathToTree)
+            {
+                var model = compilation.GetSemanticModel(kvp.Value);
+                semanticContext[kvp.Key] = (kvp.Value, model);
+            }
+        }
+
+        // Phase 2: Process each file — semantic fixers first, then layout fixers
         foreach (var filePath in csFiles)
         {
-            var result = FixFile(filePath);
+            var result = FixFile(filePath, semanticFixers, semanticContext);
             if (result.TotalChanges > 0)
             {
                 summary.FilesChanged++;
@@ -32,15 +60,45 @@ public class LayoutFixerOrchestrator
         return summary;
     }
 
-    public FileFixResult FixFile(string filePath)
+    private FileFixResult FixFile(
+        string filePath,
+        List<ISemanticFixer> semanticFixers,
+        Dictionary<string, (SyntaxTree Tree, SemanticModel Model)>? semanticContext)
     {
-        var sourceText = File.ReadAllText(filePath);
-        var tree = CSharpSyntaxTree.ParseText(sourceText, path: filePath);
         var result = new FileFixResult { FilePath = filePath };
 
-        var fixers = BuildFixerPipeline();
+        SyntaxTree tree;
 
-        foreach (var fixer in fixers)
+        // Run semantic fixers if we have a compilation context for this file
+        if (semanticContext != null && semanticContext.TryGetValue(filePath, out var ctx))
+        {
+            tree = ctx.Tree;
+            foreach (var fixer in semanticFixers)
+            {
+                try
+                {
+                    var fixerResult = fixer.Fix(tree, ctx.Model);
+                    if (fixerResult.WasModified)
+                    {
+                        tree = fixerResult.Tree;
+                        result.FixerChanges[fixer.Name] = fixerResult.ChangesApplied;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"  Warning: {fixer.Name} failed on {Path.GetFileName(filePath)}: {ex.Message}");
+                }
+            }
+        }
+        else
+        {
+            var sourceText = File.ReadAllText(filePath);
+            tree = CSharpSyntaxTree.ParseText(sourceText, path: filePath);
+        }
+
+        // Run layout fixers
+        var layoutFixers = BuildFixerPipeline();
+        foreach (var fixer in layoutFixers)
         {
             try
             {
@@ -64,6 +122,11 @@ public class LayoutFixerOrchestrator
         }
 
         return result;
+    }
+
+    public FileFixResult FixFile(string filePath)
+    {
+        return FixFile(filePath, new List<ISemanticFixer>(), null);
     }
 
     private List<ILayoutFixer> BuildFixerPipeline()
@@ -117,6 +180,16 @@ public class LayoutFixerOrchestrator
         // Blank lines always runs for consecutive collapse;
         // brace/region rules only apply when config is detected
         fixers.Add(new BlankLineFixer(_config.BlankLines));
+
+        return fixers;
+    }
+
+    private List<ISemanticFixer> BuildSemanticFixerPipeline()
+    {
+        var fixers = new List<ISemanticFixer>();
+
+        if (_config.VarStyle != null)
+            fixers.Add(new VarStyleFixer(_config.VarStyle.Style));
 
         return fixers;
     }

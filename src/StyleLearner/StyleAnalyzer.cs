@@ -29,6 +29,7 @@ public class StyleAnalyzer
             new NewLineKeywordDetector(),
             new ContinuationIndentDetector(),
             new UsingDirectiveDetector(),
+            new VarStyleDetector(),
         };
     }
 

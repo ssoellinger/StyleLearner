@@ -4,7 +4,7 @@ using StyleLearner.Output;
 
 if (args.Length == 0)
 {
-    Console.WriteLine("Usage: StyleLearner <directory> [--output editorconfig|html] [--report <path>] [--exclude <pattern>]... [--fix [--fix-path <dir>] [--dry-run] [--min-confidence <pct>]]");
+    Console.WriteLine("Usage: StyleLearner <directory> [--output editorconfig|html] [--report <path>] [--exclude <pattern>]... [--fix [--fix-path <dir>] [--dry-run] [--min-confidence <pct>]] [--save-style <path>] [--load-style <path>]");
     Console.WriteLine();
     Console.WriteLine("Examples:");
     Console.WriteLine("  StyleLearner \"C:\\MyProject\"");
@@ -15,6 +15,9 @@ if (args.Length == 0)
     Console.WriteLine("  StyleLearner \"C:\\MyProject\" --fix --dry-run");
     Console.WriteLine("  StyleLearner \"C:\\MyProject\" --fix --min-confidence 90");
     Console.WriteLine("  StyleLearner \"C:\\MyProject\" --fix --fix-path \"C:\\OtherDir\"  (learn from MyProject, apply to OtherDir)");
+    Console.WriteLine("  StyleLearner \"C:\\MyProject\" --fix --git-changed              (fix only git-changed files)");
+    Console.WriteLine("  StyleLearner \"C:\\MyProject\" --save-style style.json           (analyze and save learned style)");
+    Console.WriteLine("  StyleLearner \"C:\\MyProject\" --fix --load-style style.json     (fix using saved style, skip analysis)");
     return 1;
 }
 
@@ -31,8 +34,11 @@ string? reportPath = null;
 var excludePatterns = new List<string>();
 bool fix = false;
 bool dryRun = false;
+bool gitChanged = false;
 double minConfidence = 80.0;
 string? fixPath = null;
+string? saveStylePath = null;
+string? loadStylePath = null;
 
 for (int i = 1; i < args.Length; i++)
 {
@@ -56,52 +62,108 @@ for (int i = 1; i < args.Length; i++)
         case "--dry-run":
             dryRun = true;
             break;
+        case "--git-changed":
+            gitChanged = true;
+            break;
         case "--min-confidence" when i + 1 < args.Length:
             if (double.TryParse(args[++i], out double mc))
                 minConfidence = mc;
             break;
+        case "--save-style" when i + 1 < args.Length:
+            saveStylePath = args[++i];
+            break;
+        case "--load-style" when i + 1 < args.Length:
+            loadStylePath = args[++i];
+            break;
     }
 }
 
-var analyzer = new StyleAnalyzer(excludePatterns.Count > 0 ? excludePatterns : null);
-var report = analyzer.Analyze(directoryPath);
-
-var consoleReporter = new ConsoleReporter();
-consoleReporter.Print(report);
-
-if (outputMode?.Equals("editorconfig", StringComparison.OrdinalIgnoreCase) == true)
+// Load flow: skip analysis entirely when loading a saved style
+LayoutStyleConfig? loadedConfig = null;
+if (loadStylePath != null)
 {
-    Console.WriteLine();
-    var generator = new EditorConfigGenerator();
-    var editorConfig = generator.Generate(report);
-    Console.WriteLine("Generated .editorconfig:");
-    Console.WriteLine(new string('=', 60));
-    Console.WriteLine(editorConfig);
+    if (!File.Exists(loadStylePath))
+    {
+        Console.Error.WriteLine($"Style file not found: {loadStylePath}");
+        return 1;
+    }
+
+    loadedConfig = StyleConfigSerializer.Load(loadStylePath);
+    Console.WriteLine($"Loaded style config from: {loadStylePath}");
 }
-else if (outputMode?.Equals("html", StringComparison.OrdinalIgnoreCase) == true)
+
+if (loadedConfig == null)
 {
-    var htmlReporter = new HtmlReporter();
-    var html = htmlReporter.Generate(report);
-    var htmlPath = reportPath ?? Path.Combine(directoryPath, "style-report.html");
-    File.WriteAllText(htmlPath, html);
-    Console.WriteLine($"HTML report written to: {htmlPath}");
+    // Normal analysis flow
+    var analyzer = new StyleAnalyzer(excludePatterns.Count > 0 ? excludePatterns : null);
+    var report = analyzer.Analyze(directoryPath);
+
+    var consoleReporter = new ConsoleReporter();
+    consoleReporter.Print(report);
+
+    if (outputMode?.Equals("editorconfig", StringComparison.OrdinalIgnoreCase) == true)
+    {
+        Console.WriteLine();
+        var generator = new EditorConfigGenerator();
+        var editorConfig = generator.Generate(report);
+        Console.WriteLine("Generated .editorconfig:");
+        Console.WriteLine(new string('=', 60));
+        Console.WriteLine(editorConfig);
+    }
+    else if (outputMode?.Equals("html", StringComparison.OrdinalIgnoreCase) == true)
+    {
+        var htmlReporter = new HtmlReporter();
+        var html = htmlReporter.Generate(report);
+        var htmlPath = reportPath ?? Path.Combine(directoryPath, "style-report.html");
+        File.WriteAllText(htmlPath, html);
+        Console.WriteLine($"HTML report written to: {htmlPath}");
+    }
+
+    if (fix || saveStylePath != null)
+    {
+        var configBuilder = new LayoutStyleConfigBuilder(minConfidence);
+        var builtConfig = configBuilder.Build(report);
+
+        if (saveStylePath != null)
+        {
+            StyleConfigSerializer.Save(builtConfig, saveStylePath);
+            Console.WriteLine($"Style config saved to: {saveStylePath}");
+        }
+
+        if (fix)
+            loadedConfig = builtConfig;
+    }
 }
 
 if (fix)
 {
+    if (loadedConfig == null)
+    {
+        Console.Error.WriteLine("No style config available for fixing.");
+        return 1;
+    }
+
     Console.WriteLine();
     Console.WriteLine(new string('=', 60));
     Console.WriteLine(dryRun ? "FIX MODE (dry run — no files will be modified)" : "FIX MODE");
     Console.WriteLine(new string('=', 60));
 
-    var configBuilder = new LayoutStyleConfigBuilder(minConfidence);
-    var config = configBuilder.Build(report);
+    var config = loadedConfig;
 
     PrintActiveRules(config);
 
     var targetPath = fixPath ?? directoryPath;
     var fixAnalyzer = new StyleAnalyzer(excludePatterns.Count > 0 ? excludePatterns : null);
     var csFiles = fixAnalyzer.FindCsFiles(targetPath);
+
+    if (gitChanged)
+    {
+        var changedFiles = GitHelper.GetChangedCsFiles(targetPath);
+        var changedSet = new HashSet<string>(changedFiles, StringComparer.OrdinalIgnoreCase);
+        csFiles = csFiles.Where(f => changedSet.Contains(Path.GetFullPath(f))).ToList();
+        Console.WriteLine($"Git-changed filter: {csFiles.Count} file(s) to fix (of {changedSet.Count} changed .cs files)");
+    }
+
     var orchestrator = new LayoutFixerOrchestrator(config, dryRun);
     var summary = orchestrator.FixDirectory(targetPath, csFiles);
 
@@ -208,4 +270,9 @@ static void PrintActiveRules(LayoutStyleConfig config)
             $"placement: {config.UsingDirectives.Placement}");
     else
         Console.WriteLine("  Using Directives: skipped (low confidence)");
+
+    if (config.VarStyle != null)
+        Console.WriteLine($"  Var Style: {config.VarStyle.Style}");
+    else
+        Console.WriteLine("  Var Style: skipped (low confidence)");
 }

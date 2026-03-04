@@ -28,6 +28,7 @@ public class LayoutStyleConfigBuilder
             ContinuationIndent = BuildContinuationIndentRule(report),
             UsingDirectives = BuildUsingDirectiveRule(report),
             BraceStyle = BuildBraceStyleRule(report),
+            VarStyle = BuildVarStyleRule(report),
         };
     }
 
@@ -274,6 +275,20 @@ public class LayoutStyleConfigBuilder
         if (style == null) return null;
 
         return new BraceStyleRule
+        {
+            Style = style,
+        };
+    }
+
+    private VarStyleRule? BuildVarStyleRule(StyleReport report)
+    {
+        var result = FindDetector(report, "Var Style");
+        if (result == null || result.Confidence < _minConfidence) return null;
+
+        var style = GetDetail<string>(result, "Style");
+        if (style == null) return null;
+
+        return new VarStyleRule
         {
             Style = style,
         };
